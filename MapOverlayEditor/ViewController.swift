@@ -12,9 +12,13 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
     @IBOutlet weak var mainMapView: MKMapView!
     var isDragEnabled = false
     var initialDragPoint: CGPoint?
-    var currentPoint: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 34.4140, longitude: -119.8489)
-    var circleOverlay: MKOverlay?
-    let circleRadius: CGFloat = 20
+    
+    var isPinchEnabled = false
+    var initialPinchScale: CGFloat?
+    var initialPinchRect: CGRect?
+    
+    var currentLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 34.4140, longitude: -119.8489)
+    var dragOverlay: MKOverlay?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,12 +29,13 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
         mainMapView.isRotateEnabled = false
         mainMapView.isPitchEnabled = false
         
-        circleOverlay = makeCircleOverlay(at: currentPoint)
-        mainMapView.addOverlay(circleOverlay!)
+        dragOverlay = makeImageOverlay(rect: MKMapRect(origin: MKMapPoint(currentLocation), size: MKMapSize(width: 1000, height: 1000)))
+        mainMapView.addOverlay(dragOverlay!, level: MKOverlayLevel.aboveLabels)
         
-        mainMapView.setRegion(MKCoordinateRegion(center: currentPoint, latitudinalMeters: 1000, longitudinalMeters: 1000), animated: false)
+        mainMapView.setRegion(MKCoordinateRegion(center: currentLocation, latitudinalMeters: 1000, longitudinalMeters: 1000), animated: false)
         
         addPanGestureRecognizer(to: mainMapView)
+        addPinchGestureRecognizer(to: mainMapView)
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
@@ -49,8 +54,8 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
         }
     }
     
-    func makeCircleOverlay(at center: CLLocationCoordinate2D) -> MKOverlay {
-        return MKCircle(center: center, radius: circleRadius)
+    func makeImageOverlay(rect: MKMapRect) -> MKOverlay {
+        return ImageMapOverlay(rect: rect)
     }
 
     func addPanGestureRecognizer(to map: MKMapView) {
@@ -61,35 +66,83 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
     }
 
     @objc func respondToPanGesture(_ sender: UIPanGestureRecognizer) {
-        let circlePoint = mainMapView.convert(currentPoint, toPointTo: mainMapView) // circle center in View coordinate system
+        let currentPoint = mainMapView.convert(currentLocation, toPointTo: mainMapView)
+        let currentRect = mainMapView.convert(MKCoordinateRegion(dragOverlay!.boundingMapRect), toRectTo: mainMapView)
 
         switch sender.state {
         case .began:
-            let point = sender.location(in: mainMapView)
-            // Set touch radius in points, not meters to support different map zoom levels
-            if point.radiusContainsPoint(radius: circleRadius, point: circlePoint) {
-                // set class property to store initial circle position before start dragging
-                initialDragPoint = circlePoint
-                mainMapView.isScrollEnabled = false
-                isDragEnabled = true
-            }
-            else {
-                mainMapView.isScrollEnabled = true
-                isDragEnabled = false
+            if !isPinchEnabled {
+                let point = sender.location(in: mainMapView)
+                if currentRect.contains(point) {
+                    initialDragPoint = currentPoint
+                    mainMapView.isScrollEnabled = false
+                    isDragEnabled = true
+                }
+                else {
+                    mainMapView.isScrollEnabled = true
+                    isDragEnabled = false
+                }
             }
         case .changed:
             if isDragEnabled {
                 let translation = sender.translation(in: mainMapView)
                 let newPoint = CGPoint(x: initialDragPoint!.x + translation.x, y: initialDragPoint!.y + translation.y)
-                currentPoint = mainMapView.convert(newPoint, toCoordinateFrom: mainMapView)
-                let newOverlay = makeCircleOverlay(at: currentPoint)
-                mainMapView.removeOverlay(circleOverlay!)
-                mainMapView.addOverlay(newOverlay)
-                circleOverlay = newOverlay
+                currentLocation = mainMapView.convert(newPoint, toCoordinateFrom: mainMapView)
+                let newOverlay = makeImageOverlay(rect: MKMapRect(origin: MKMapPoint(currentLocation), size: dragOverlay!.boundingMapRect.size))
+                mainMapView.removeOverlay(dragOverlay!)
+                mainMapView.addOverlay(newOverlay, level: MKOverlayLevel.aboveLabels)
+                dragOverlay = newOverlay
             }
         case .ended, .failed, .cancelled:
             mainMapView.isScrollEnabled = true
             isDragEnabled = false
+        case .possible:
+            break
+        default:
+            break
+        }
+    }
+    
+    func addPinchGestureRecognizer(to map: MKMapView) {
+        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(respondToPinchGesture(_:)))
+        pinchGesture.delegate = self
+        map.addGestureRecognizer(pinchGesture)
+    }
+    
+    @objc func respondToPinchGesture(_ sender: UIPinchGestureRecognizer) {
+        let currentRect = mainMapView.convert(MKCoordinateRegion(dragOverlay!.boundingMapRect), toRectTo: mainMapView)
+        
+        switch sender.state {
+        case .began:
+            if !isDragEnabled {
+                let point = sender.location(in: mainMapView)
+                if currentRect.contains(point) {
+                    initialPinchScale = sender.scale
+                    initialPinchRect = currentRect
+                    mainMapView.isZoomEnabled = false
+                    mainMapView.isScrollEnabled = false
+                    isPinchEnabled = true
+                }
+                else {
+                    mainMapView.isZoomEnabled = true
+                    mainMapView.isScrollEnabled = true
+                    isPinchEnabled = false
+                }
+            }
+        case .changed:
+            if isPinchEnabled {
+                let scaleChange = sender.scale/initialPinchScale!
+                let newRect = CGRect(origin: initialPinchRect!.origin, size: initialPinchRect!.size.applying(CGAffineTransform(scaleX: scaleChange, y: scaleChange)))
+                
+                let newOverlay = makeImageOverlay(rect: mainMapView.convert(newRect, toRegionFrom: mainMapView).toRect())
+                mainMapView.removeOverlay(dragOverlay!)
+                mainMapView.addOverlay(newOverlay, level: MKOverlayLevel.aboveLabels)
+                dragOverlay = newOverlay
+            }
+        case .ended, .failed, .cancelled:
+            mainMapView.isZoomEnabled = true
+            mainMapView.isScrollEnabled = false
+            isPinchEnabled = false
         case .possible:
             break
         default:
@@ -110,5 +163,17 @@ extension CGPoint {
 
     func radiusContainsPoint(radius: CGFloat, point center: CGPoint) -> Bool {
       return distance(from: center, to: self) <= radius
+    }
+}
+
+extension MKCoordinateRegion {
+    func toRect() -> MKMapRect {
+        let topLeft = CLLocationCoordinate2D(latitude: self.center.latitude + (self.span.latitudeDelta/2), longitude: self.center.longitude - (self.span.longitudeDelta/2))
+        let bottomRight = CLLocationCoordinate2D(latitude: self.center.latitude - (self.span.latitudeDelta/2), longitude: self.center.longitude + (self.span.longitudeDelta/2))
+
+        let a = MKMapPoint(topLeft)
+        let b = MKMapPoint(bottomRight)
+        
+        return MKMapRect(origin: MKMapPoint(x:min(a.x,b.x), y:min(a.y,b.y)), size: MKMapSize(width: abs(a.x-b.x), height: abs(a.y-b.y)))
     }
 }
