@@ -75,10 +75,12 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
                 let point = sender.location(in: mainMapView)
                 if currentRect.contains(point) {
                     initialDragPoint = currentPoint
+                    mainMapView.isZoomEnabled = false
                     mainMapView.isScrollEnabled = false
                     isDragEnabled = true
                 }
                 else {
+                    mainMapView.isZoomEnabled = true
                     mainMapView.isScrollEnabled = true
                     isDragEnabled = false
                 }
@@ -94,6 +96,7 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
                 dragOverlay = newOverlay
             }
         case .ended, .failed, .cancelled:
+            mainMapView.isZoomEnabled = true
             mainMapView.isScrollEnabled = true
             isDragEnabled = false
         case .possible:
@@ -132,7 +135,7 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
         case .changed:
             if isPinchEnabled {
                 let scaleChange = sender.scale/initialPinchScale!
-                let newRect = CGRect(origin: initialPinchRect!.origin, size: initialPinchRect!.size.applying(CGAffineTransform(scaleX: scaleChange, y: scaleChange)))
+                let newRect = CGRect(origin: CGPoint(x: initialPinchRect!.origin.x+(initialPinchRect!.size.width/2*(1-scaleChange)), y: initialPinchRect!.origin.y+(initialPinchRect!.size.height/2*(1-scaleChange))), size: initialPinchRect!.size.applying(CGAffineTransform(scaleX: scaleChange, y: scaleChange)))
                 
                 let newOverlay = makeImageOverlay(rect: mainMapView.convert(newRect, toRegionFrom: mainMapView).toRect())
                 mainMapView.removeOverlay(dragOverlay!)

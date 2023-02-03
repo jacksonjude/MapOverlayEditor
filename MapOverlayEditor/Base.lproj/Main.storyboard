@@ -21,13 +21,24 @@
                                 <rect key="frame" x="0.0" y="59" width="393" height="759"/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sRk-5h-KEa">
+                                <rect key="frame" x="298" y="723" width="75" height="75"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="75" id="C2m-FV-0Nu"/>
+                                    <constraint firstAttribute="height" constant="75" id="XgC-zz-vMy"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="gray"/>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="7G6-JK-YtW" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="8VL-fc-7nX"/>
                             <constraint firstItem="7G6-JK-YtW" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="IEv-jy-Kye"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="sRk-5h-KEa" secondAttribute="trailing" constant="20" id="gFa-yy-ulH"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="7G6-JK-YtW" secondAttribute="bottom" id="goL-98-gFp"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="sRk-5h-KEa" secondAttribute="bottom" constant="20" id="iay-UF-tb9"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="7G6-JK-YtW" secondAttribute="trailing" id="kNa-rK-O15"/>
                         </constraints>
                     </view>
@@ -37,7 +48,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="136.64122137404578" y="3.5211267605633805"/>
+            <point key="canvasLocation" x="135.1145038167939" y="3.5211267605633805"/>
         </scene>
     </scenes>
     <resources>
