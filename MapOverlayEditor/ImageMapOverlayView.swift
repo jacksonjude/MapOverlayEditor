@@ -21,6 +21,7 @@ class ImageMapOverlayView: MKOverlayRenderer {
         let rect = self.rect(for: overlay.boundingMapRect)
         context.scaleBy(x: 1.0, y: -1.0)
         context.translateBy(x: 0.0, y: -rect.size.height)
+        context.setAlpha(0.5)
         context.draw(imageReference, in: rect)
     }
 }

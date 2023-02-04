@@ -3,6 +3,7 @@
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="Map view configurations" minToolsVersion="14.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -18,31 +19,65 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7G6-JK-YtW">
-                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sRk-5h-KEa">
-                                <rect key="frame" x="298" y="723" width="75" height="75"/>
+                                <rect key="frame" x="327" y="75" width="50" height="50"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="75" id="C2m-FV-0Nu"/>
-                                    <constraint firstAttribute="height" constant="75" id="XgC-zz-vMy"/>
+                                    <constraint firstAttribute="width" constant="50" id="C2m-FV-0Nu"/>
+                                    <constraint firstAttribute="height" constant="50" id="XgC-zz-vMy"/>
                                 </constraints>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="gray"/>
+                                <buttonConfiguration key="configuration" style="gray">
+                                    <imageReference key="image" image="lock.open.fill" catalog="system" symbolScale="large"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <action selector="pressedLockButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="YXa-GZ-3vd"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oap-WS-l79">
+                                <rect key="frame" x="327" y="141" width="50" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="50" id="Pr5-ab-vYg"/>
+                                    <constraint firstAttribute="height" constant="50" id="QKG-cQ-vLe"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="gray" image="folder.fill" catalog="system"/>
+                                <connections>
+                                    <action selector="openImagePicker:" destination="BYZ-38-t0r" eventType="touchUpInside" id="KnD-HZ-gdb"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="71A-mW-7JB">
+                                <rect key="frame" x="327" y="207" width="50" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="9m8-KJ-Leh"/>
+                                    <constraint firstAttribute="width" constant="50" id="Tyq-ES-C6b"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="gray" image="location.fill.viewfinder" catalog="system"/>
+                                <connections>
+                                    <action selector="printCurrentLocation:" destination="BYZ-38-t0r" eventType="touchUpInside" id="NOd-aR-a7K"/>
+                                </connections>
                             </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="7G6-JK-YtW" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="8VL-fc-7nX"/>
+                            <constraint firstItem="7G6-JK-YtW" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="8VL-fc-7nX"/>
                             <constraint firstItem="7G6-JK-YtW" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="IEv-jy-Kye"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="sRk-5h-KEa" secondAttribute="trailing" constant="20" id="gFa-yy-ulH"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="7G6-JK-YtW" secondAttribute="bottom" id="goL-98-gFp"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="sRk-5h-KEa" secondAttribute="bottom" constant="20" id="iay-UF-tb9"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="71A-mW-7JB" secondAttribute="trailing" constant="16" id="PqI-0i-mGz"/>
+                            <constraint firstItem="oap-WS-l79" firstAttribute="top" secondItem="sRk-5h-KEa" secondAttribute="bottom" constant="16" id="WVe-9r-lAT"/>
+                            <constraint firstItem="71A-mW-7JB" firstAttribute="top" secondItem="oap-WS-l79" secondAttribute="bottom" constant="16" id="Yub-gU-x0F"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="oap-WS-l79" secondAttribute="trailing" constant="16" id="bVr-Rs-4lX"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="sRk-5h-KEa" secondAttribute="trailing" constant="16" id="gFa-yy-ulH"/>
+                            <constraint firstAttribute="bottom" secondItem="7G6-JK-YtW" secondAttribute="bottom" id="goL-98-gFp"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="7G6-JK-YtW" secondAttribute="trailing" id="kNa-rK-O15"/>
+                            <constraint firstItem="sRk-5h-KEa" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="16" id="zsz-qW-bRS"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="lockButton" destination="sRk-5h-KEa" id="FL2-gf-5HY"/>
                         <outlet property="mainMapView" destination="7G6-JK-YtW" id="WuW-DT-QGe"/>
                     </connections>
                 </viewController>
@@ -52,6 +87,9 @@
         </scene>
     </scenes>
     <resources>
+        <image name="folder.fill" catalog="system" width="128" height="96"/>
+        <image name="location.fill.viewfinder" catalog="system" width="128" height="115"/>
+        <image name="lock.open.fill" catalog="system" width="128" height="110"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

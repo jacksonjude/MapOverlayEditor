@@ -7,9 +7,14 @@
 
 import UIKit
 import MapKit
+import UniformTypeIdentifiers
 
-class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate {
+class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate {
     @IBOutlet weak var mainMapView: MKMapView!
+    @IBOutlet weak var lockButton: UIButton!
+    
+    var overlayImage: UIImage = UIImage(imageLiteralResourceName: "swego")
+    
     var isDragEnabled = false
     var initialDragPoint: CGPoint?
     
@@ -19,6 +24,8 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
     
     var currentLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 34.4140, longitude: -119.8489)
     var dragOverlay: MKOverlay?
+    
+    var isOverlayLocked = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,7 +54,7 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
             circleRenderer.lineWidth = 2.0
             return circleRenderer
         } else if overlay is ImageMapOverlay {
-            let imageRenderer = ImageMapOverlayView(overlay: overlay, overlayImage: UIImage(imageLiteralResourceName: "swego"))
+            let imageRenderer = ImageMapOverlayView(overlay: overlay, overlayImage: overlayImage)
             return imageRenderer
         } else {
             return MKPolylineRenderer()
@@ -66,6 +73,8 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
     }
 
     @objc func respondToPanGesture(_ sender: UIPanGestureRecognizer) {
+        if isOverlayLocked { return }
+        
         let currentPoint = mainMapView.convert(currentLocation, toPointTo: mainMapView)
         let currentRect = mainMapView.convert(MKCoordinateRegion(dragOverlay!.boundingMapRect), toRectTo: mainMapView)
 
@@ -113,6 +122,8 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
     }
     
     @objc func respondToPinchGesture(_ sender: UIPinchGestureRecognizer) {
+        if isOverlayLocked { return }
+        
         let currentRect = mainMapView.convert(MKCoordinateRegion(dragOverlay!.boundingMapRect), toRectTo: mainMapView)
         
         switch sender.state {
@@ -135,7 +146,9 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
         case .changed:
             if isPinchEnabled {
                 let scaleChange = sender.scale/initialPinchScale!
-                let newRect = CGRect(origin: CGPoint(x: initialPinchRect!.origin.x+(initialPinchRect!.size.width/2*(1-scaleChange)), y: initialPinchRect!.origin.y+(initialPinchRect!.size.height/2*(1-scaleChange))), size: initialPinchRect!.size.applying(CGAffineTransform(scaleX: scaleChange, y: scaleChange)))
+                let newOrigin = CGPoint(x: initialPinchRect!.origin.x+(initialPinchRect!.size.width/2*(1-scaleChange)), y: initialPinchRect!.origin.y+(initialPinchRect!.size.height/2*(1-scaleChange)))
+                currentLocation = mainMapView.convert(newOrigin, toCoordinateFrom: mainMapView)
+                let newRect = CGRect(origin: newOrigin, size: initialPinchRect!.size.applying(CGAffineTransform(scaleX: scaleChange, y: scaleChange)))
                 
                 let newOverlay = makeImageOverlay(rect: mainMapView.convert(newRect, toRegionFrom: mainMapView).toRect())
                 mainMapView.removeOverlay(dragOverlay!)
@@ -144,7 +157,7 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
             }
         case .ended, .failed, .cancelled:
             mainMapView.isZoomEnabled = true
-            mainMapView.isScrollEnabled = false
+            mainMapView.isScrollEnabled = true
             isPinchEnabled = false
         case .possible:
             break
@@ -156,6 +169,52 @@ class ViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDe
     // MARK: - UIGestureRecognizerDelegate
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
+    }
+    
+    @IBAction func pressedLockButton(_ sender: Any) {
+        isOverlayLocked = !isOverlayLocked
+        if isOverlayLocked {
+            lockButton.setImage(UIImage(systemName: "lock.fill"), for: .normal)
+            
+            mainMapView.isZoomEnabled = true
+            mainMapView.isScrollEnabled = true
+            isPinchEnabled = false
+            isDragEnabled = false
+        } else {
+            lockButton.setImage(UIImage(systemName: "lock.open.fill"), for: .normal)
+        }
+    }
+    
+    @IBAction func openImagePicker(_ sender: Any) {
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [UTType.image])
+        documentPicker.delegate = self
+        documentPicker.allowsMultipleSelection = false
+
+        self.present(documentPicker, animated: true, completion: nil)
+    }
+    
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let url = urls.first, url.startAccessingSecurityScopedResource(), let image = UIImage(contentsOfFile: url.path) else { return }
+        
+        mainMapView.removeOverlay(dragOverlay!)
+        overlayImage = image
+        let widthToHeight = overlayImage.size.height/overlayImage.size.width
+        dragOverlay = makeImageOverlay(rect: MKMapRect(origin: dragOverlay!.boundingMapRect.origin, size: MKMapSize(width: dragOverlay!.boundingMapRect.width, height: dragOverlay!.boundingMapRect.width*widthToHeight)))
+        mainMapView.addOverlay(dragOverlay!, level: MKOverlayLevel.aboveLabels)
+    }
+    
+    @IBAction func printCurrentLocation(_ sender: Any) {
+        let currentRect = dragOverlay!.boundingMapRect
+        
+        let topLeftCoordinate = currentRect.origin.coordinate
+        let bottomRightCoordinate = MKMapPoint(x: currentRect.maxX, y: currentRect.maxY).coordinate
+        
+        let alert = UIAlertController(title: "Coordinates", message: "TL: \(topLeftCoordinate.latitude), \(topLeftCoordinate.longitude)\nBR: \(bottomRightCoordinate.latitude), \(bottomRightCoordinate.longitude)", preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Copy", style: .default, handler: { action in
+            UIPasteboard.general.string = "\(topLeftCoordinate.latitude), \(topLeftCoordinate.longitude)\n\(bottomRightCoordinate.latitude), \(bottomRightCoordinate.longitude)"
+        }))
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(alert, animated: true)
     }
 }
 
